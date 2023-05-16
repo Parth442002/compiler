@@ -316,3 +316,250 @@ ll1Table = ll1(follow_dict, productions)
 # tp(ll1Table)
 
 """
+
+
+postpCODE = """
+def infix_to_postfix(expression):
+    operators = {
+        '+': 1,
+        '-': 1,
+        '*': 2,
+        '/': 2,
+        '^': 3
+    }
+    stack = []
+    postfix = ''
+
+    for char in expression:
+        if char.isalnum():
+            postfix += char
+        elif char == '(':
+            stack.append('(')
+        elif char == ')':
+            while stack and stack[-1] != '(':
+                postfix += stack.pop()
+            stack.pop()
+        else:
+            while stack and stack[-1] != '(' and operators[char] <= operators.get(stack[-1], 0):
+                postfix += stack.pop()
+            stack.append(char)
+
+    while stack:
+        postfix += stack.pop()
+
+    return postfix
+
+
+def infix_to_prefix(expression):
+    operators = {
+        '+': 1,
+        '-': 1,
+        '*': 2,
+        '/': 2,
+        '^': 3
+    }
+    stack = []
+    prefix = ''
+
+    for char in expression[::-1]:
+        if char.isalnum():
+            prefix = char + prefix
+        elif char == ')':
+            stack.append(')')
+        elif char == '(':
+            while stack and stack[-1] != ')':
+                prefix = stack.pop() + prefix
+            stack.pop()
+        else:
+            while stack and stack[-1] != ')' and operators[char] <= operators.get(stack[-1], 0):
+                prefix = stack.pop() + prefix
+            stack.append(char)
+
+    while stack:
+        prefix = stack.pop() + prefix
+
+    return prefix
+
+
+# Example usage
+infix_expression = 'A + B * C - D / E ^ F'
+postfix_expression = infix_to_postfix(infix_expression)
+prefix_expression = infix_to_prefix(infix_expression)
+
+print("Infix Expression:", infix_expression)
+print("Postfix Expression:", postfix_expression)
+print("Prefix Expression:", prefix_expression)
+"""
+
+
+dagCode = """
+class DAGNode:
+    def __init__(self, label, operator=None, operand1=None, operand2=None):
+        self.label = label
+        self.operator = operator
+        self.operand1 = operand1
+        self.operand2 = operand2
+        self.parents = []
+
+
+def construct_dag(expression):
+    symbol_table = {}
+    dag_nodes = []
+
+    def create_dag_node(label, operator=None, operand1=None, operand2=None):
+        node = DAGNode(label, operator, operand1, operand2)
+        dag_nodes.append(node)
+        return node
+
+    def get_dag_node(label):
+        return symbol_table.get(label)
+
+    def add_dag_parent(node, parent):
+        node.parents.append(parent)
+
+    def evaluate_expression(expr):
+        if expr.isdigit():
+            return create_dag_node(expr)
+
+        tokens = expr.split()
+        operator = tokens[0]
+        operand1 = get_dag_node(tokens[1])
+        operand2 = get_dag_node(tokens[2])
+
+        if operand1 is None:
+            operand1 = create_dag_node(tokens[1])
+
+        if operand2 is None:
+            operand2 = create_dag_node(tokens[2])
+
+        result = operator + str(len(dag_nodes) + 1)
+        node = create_dag_node(result, operator, operand1, operand2)
+
+        add_dag_parent(operand1, node)
+        add_dag_parent(operand2, node)
+
+        symbol_table[result] = node
+
+        return node
+
+    root_node = evaluate_expression(expression)
+    return root_node, dag_nodes
+
+
+# Example usage
+expression = "a + b * (c - d)"
+root, dag_nodes = construct_dag(expression)
+
+print("DAG Nodes:")
+for node in dag_nodes:
+    parents = [parent.label for parent in node.parents]
+    print(f"Label: {node.label}, Operator: {node.operator}, Operand1: {node.operand1}, Operand2: {node.operand2}, Parents: {parents}")
+
+print("\nRoot Node:")
+print(f"Label: {root.label}, Operator: {root.operator}, Operand1: {root.operand1}, Operand2: {root.operand2}, Parents: {root.parents}")
+"""
+
+leadTrailCode = """
+def compute_leading_sets(grammar):
+    leading = {}
+    epsilon = 'ε'
+
+    # Initialize leading sets with empty sets
+    for non_terminal in grammar['non_terminals']:
+        leading[non_terminal] = set()
+
+    # Iterate until no changes occur in the leading sets
+    changed = True
+    while changed:
+        changed = False
+
+        for production in grammar['productions']:
+            non_terminal = production[0]
+            rhs = production[1:]
+
+            for symbol in rhs:
+                if symbol in grammar['terminals']:
+                    # Add terminal symbol to the leading set
+                    if symbol not in leading[non_terminal]:
+                        leading[non_terminal].add(symbol)
+                        changed = True
+
+                    break
+                else:
+                    # Add leading set of the non-terminal symbol to the current non-terminal's leading set
+                    if epsilon not in leading[symbol]:
+                        leading[non_terminal] = leading[non_terminal].union(leading[symbol])
+                        changed = True
+
+                    if epsilon not in leading[symbol]:
+                        break
+
+    return leading
+
+
+def compute_trailing_sets(grammar):
+    trailing = {}
+    epsilon = 'ε'
+
+    # Initialize trailing sets with empty sets
+    for non_terminal in grammar['non_terminals']:
+        trailing[non_terminal] = set()
+
+    # Iterate until no changes occur in the trailing sets
+    changed = True
+    while changed:
+        changed = False
+
+        for production in grammar['productions']:
+            non_terminal = production[0]
+            rhs = production[1:]
+            n = len(rhs)
+
+            for i in range(n - 1, -1, -1):
+                symbol = rhs[i]
+
+                if symbol in grammar['terminals']:
+                    # Add terminal symbol to the trailing set
+                    if symbol not in trailing[non_terminal]:
+                        trailing[non_terminal].add(symbol)
+                        changed = True
+
+                    break
+                else:
+                    # Add trailing set of the non-terminal symbol to the current non-terminal's trailing set
+                    if epsilon not in trailing[symbol]:
+                        trailing[non_terminal] = trailing[non_terminal].union(trailing[symbol])
+                        changed = True
+
+                    if epsilon not in trailing[symbol]:
+                        break
+
+    return trailing
+
+
+# Example usage
+grammar = {
+    'non_terminals': ['E', 'T', 'F'],
+    'terminals': ['+', '*', '(', ')', 'id'],
+    'productions': [
+        ['E', 'T', '+', 'E'],
+        ['E', 'T'],
+        ['T', 'F', '*', 'T'],
+        ['T', 'F'],
+        ['F', '(', 'E', ')'],
+        ['F', 'id']
+    ]
+}
+
+leading_sets = compute_leading_sets(grammar)
+trailing_sets = compute_trailing_sets(grammar)
+
+print("Leading Sets:")
+for non_terminal, leading_set in leading_sets.items():
+    print(f"{non_terminal}: {leading_set}")
+
+print("\nTrailing Sets:")
+for non_terminal, trailing_set in trailing_sets.items():
+    print(f"{non_terminal}: {trailing_set}")
+
+"""

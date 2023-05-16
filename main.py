@@ -1,5 +1,15 @@
 from fastapi import FastAPI
-from codes import laCode, reNFACode, ndaDFACode, leftRCode, leftFCode, firstFollowCode
+from codes import (
+    laCode,
+    reNFACode,
+    ndaDFACode,
+    leftRCode,
+    leftFCode,
+    firstFollowCode,
+    postpCODE,
+    dagCode,
+    leadTrailCode,
+)
 
 app = FastAPI()
 
@@ -8,13 +18,15 @@ app = FastAPI()
 async def root():
     return {
         "Index": {
-            "LEXICAL ANALYZER": "LA",
-            "RE TO NFA": "RENFA",
-            "NFA to DFA": "NFATODFA",
-            "Left Recursion": "LEFTR",
-            "Left Factoring": "LEFTF",
-            "First and Follow": "FANDF",
-            "Postfix and Prefix": "PostPre",
+            "LEXICAL ANALYZER": "la",
+            "RE TO NFA": "renfa",
+            "NFA to DFA": "nfadfa",
+            "Left Recursion": "leftr",
+            "Left Factoring": "leftf",
+            "First and Follow": "firstf",
+            "Postfix and Prefix": "postp",
+            "Construction of Dag": "dag",
+            "lead and trail": "leadt",
         }
     }
 
@@ -47,6 +59,21 @@ async def leftf():
 @app.get("/firstf")
 async def firstFollow():
     return {"code": firstFollowCode}
+
+
+@app.get("/postp")
+async def postp():
+    return {"code": postpCODE}
+
+
+@app.get("/dag")
+async def dag():
+    return {"code": dagCode}
+
+
+@app.get("/leadt")
+async def leadtrail():
+    return {"code": leadTrailCode}
 
 
 import uvicorn
